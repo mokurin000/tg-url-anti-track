@@ -10,3 +10,7 @@ content_regex = "var url = '([^&]*)\\&"
 [www.bilibili.com]
 action = "direct"
 url_regex = '\?.*'
+
+[chaoshi.detail.tmall.com]
+action = "direct"
+url_regex = '&.*'

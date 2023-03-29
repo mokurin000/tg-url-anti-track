@@ -1,5 +1,6 @@
 import telegram
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler
+from telegram.ext import _applicationbuilder
 import re
 import requests
 import toml
@@ -7,73 +8,84 @@ import toml
 with open("config.toml", "r") as f:
     config = toml.load(f)
 
+
 def start(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, text="Hello! I'm a URL parser bot. Just type a URL and I will remove all the tracking parameters.")
+    context.bot.send_message(chat_id=update.message.chat_id, text="Hello! I'm a URL parser bot. Just type a URL and I "
+                                                                  "will remove all the tracking parameters.")
 
-def replace_query_params(query, rule):
-    url_regex = rule.get("url_regex", "")
-    url_replace = rule.get("url_replace", "")
 
-    if url_regex:
-        return re.sub(url_regex, url_replace, query)
-    else:
-        return query
+def match_expand(text, regex, expand):
+    if regex:
+        return re.search(regex, text).expand(expand)
 
-def process_url(url, rule):
+    return text
 
+
+def process_url(url, rule, domain):
     action = rule.get("action", "direct")
 
+    url_regex = rule.get("url_regex", "")
+    url_expand = rule.get("url_expand", '\1')
+
+    url = match_expand(url, url_regex, url_expand)
+
     if action == "direct":
-        return replace_query_params(url, rule)
+        return url
     elif action == "request":
-        url = replace_query_params(url, rule)
         r = requests.get(url)
 
         content_regex = rule.get("content_regex", "")
-        
-        # use \1 by default
-        content_expand = rule.get("content_expand", "\\1")
+        content_expand = rule.get("content_expand", '\1') # use '\1' by default
 
-        if content_regex:
-            return re.search(content_regex, r.text).expand(content_expand)
-        else:
-            return r.text
+        return re.search(content_regex, r.text).expand(content_expand)
+    else:
+        raise f"unexpected action '{action}' in domain '{domain}'"
 
-def inlinequery(update, context):
 
-    query = update.inline_query.query
+def inline_query(update, context):
 
-    if query:
-        url = query
+    query = update.inlinequery.query
+    url = re.search('https?://[^ \n]*', query, re.IGNORECASE)
 
-        domain = re.findall('://([a-zA-Z0-9._-]+)', url, re.IGNORECASE)[0]
-
-        if domain not in config:
-            results = [
-                telegram.InlineQueryResultArticle(
-                    id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent("unsupported url.\nplease check at repohttps://github.com/poly000/tg-url-anti-track"))
-            ]
-            context.bot.answer_inline_query(update.inline_query.id, results)
-            return
-        rule = config[domain]
-        url = process_url(url, rule)
-
+    if not url:
         results = [
             telegram.InlineQueryResultArticle(
-                id='1', title="URL", input_message_content=telegram.InputTextMessageContent(url))
+                id='1', title="no url found", input_message_content=telegram.InputTextMessageContent("no URL found in your query!\n你是故意来找茬的吧？"))
         ]
+        context.bot.answer_inline_query(update.inlinequery.id, results)
+        return
 
-        context.bot.answer_inline_query(update.inline_query.id, results)
+    url = url[0]
+    domain = re.findall('://([a-zA-Z0-9._-]+)', url, re.IGNORECASE)[0]
+
+    if domain not in config:
+        results = [
+            telegram.InlineQueryResultArticle(
+                id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent("unsupported url.\nplease check at [repo](https://github.com/poly000/tg-url-anti-track)")).parse_mode
+        ]
+        context.bot.answer_inline_query(update.inlinequery.id, results)
+        return
+
+    rule = config[domain]
+    url = process_url(url, rule, domain)
+
+    results = [
+        telegram.InlineQueryResultArticle(
+            id='1', title="URL", input_message_content=telegram.InputTextMessageContent(url))
+    ]
+
+    context.bot.answer_inline_query(update.inlinequery.id, results)
+
 
 def main():
-    updater = Updater('YOUR_API_KEY', use_context=True)
+    updater = Updater('YOUR_API_KEY')
 
-    dp = updater.dispatcher
+    dp = DispatcherBuilder
     dp.add_handler(CommandHandler('start', start))
-    dp.add_handler(InlineQueryHandler(inlinequery))
+    dp.add_handler(InlineQueryHandler(inline_query))
     updater.start_polling()
     updater.idle()
 
+
 if __name__ == '__main__':
     main()
-
