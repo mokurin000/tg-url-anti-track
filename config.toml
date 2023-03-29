@@ -1,0 +1,10 @@
+[www.example.com]
+action = "direct"   # 直接处理 URL
+url_regex = '\?utm_source=.*'
+url_replace = ''
+
+[m.tb.cn]
+action = "request"  # 处理 URL 请求的内容
+url_regex = '\?tk=.*'
+content_regex = "var url = '(.*)\&"
+content_replace = "\1"
