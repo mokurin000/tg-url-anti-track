@@ -21,15 +21,19 @@ python main.py
 ## Config format
 
 ```toml
-["domain"]
+["domain1"]
 # direct if need no request
-# request if need request with `allow_redirects=False`
-action = "..."
+action = "direct"
+# only 'id=xxx' will be reserved.
+# if `params` is not set, drop all parameters.
+params = ["id"] 
 
-url_regex = "..." # Optional
-url_expand = "..." # Optional, default is "\1"
-
-context_regex = "..." # Required when action is 'request', default will be noop
-context_expand = "..." # Optional, default is "\1"
+["domain2"]
+# request for those like 'm.tb.cn'
+action = "request"
+# Required when action is 'request', default will noop
+context_regex = "..." 
+# Optional, default is "\1"
+context_expand = "..." 
 
 ```

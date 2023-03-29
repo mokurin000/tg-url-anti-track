@@ -1,9 +1,13 @@
 import telegram
 from telegram.ext import InlineQueryHandler, CommandHandler, Application, ContextTypes
 from telegram import Update
+
 import re
-import requests
 import toml
+
+import requests
+
+from urllib.parse import urlparse, parse_qs
 
 with open("config.toml", "r") as f:
     config = toml.load(f)
@@ -22,42 +26,56 @@ def match_expand(text, regex, expand):
 
 
 def process_url(url, rule, domain):
-    action = rule.get("action", "direct")
+    action = rule.get("action", "")
 
-    url_regex = rule.get("url_regex", "")
-    url_expand = rule.get("url_expand", '\\1')
+    if not action:
+        raise "{domain}: action must not be empty!"
 
-    url = match_expand(url, url_regex, url_expand)
+    match action:
+        case "direct":
+            parsed = urlparse(url)
+            reversed_params = rule.get("params", [])
+            params = parse_qs(parsed.query)
 
-    if action == "direct":
-        return url
-    elif action == "request":
-        r = requests.get(url, allow_redirects=False)
+            scheme = parsed.scheme
+            netloc = parsed.netloc
+            path = parsed.path if parsed.path else "/"
+            url = f"{scheme}://{netloc}{path}?"
 
-        content_regex = rule.get("content_regex", "")
-        content_expand = rule.get("content_expand", '\\1')  # use '\1' by default
+            for param in reversed_params:
+                url += f"&{param}={params[param]}"
 
-        return re.search(content_regex, r.text).expand(content_expand)
-    else:
-        raise f"unexpected action '{action}' in domain '{domain}'"
+            return url.replace("?&", "?")
+        case "request":
+            r = requests.get(url, allow_redirects=False)
+
+            content_regex = rule.get("content_regex", "")
+            content_expand = rule.get("content_expand", '\\1')
+
+            url = re.search(content_regex, r.text).expand(content_expand)
+            domain = urlparse(url).netloc
+            return process_url(url, {"action": "direct"}, domain)
+        case _:
+            raise f"unexpected action '{action}' in domain '{domain}'"
 
 
 def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.inline_query.query
-    url = re.search('https?(://[^ \n]*)', query, re.IGNORECASE)
+    url = re.search('https?(://[^ \n，。]*)', query, re.IGNORECASE)
 
     if not url:
         results = [
             telegram.InlineQueryResultArticle(
                 id='1', title="no url found", input_message_content=telegram.InputTextMessageContent(
-                    "no URL found in your query!\n你是故意来找茬的吧？"))
+                    "no URL found in your query!\n"
+                    "你是故意来找茬的吧？"))
         ]
         context.bot.answer_inline_query(update.inline_query.id, results)
         return
 
     url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
-    domain = re.findall('://([a-zA-Z0-9._-]+)', url, re.IGNORECASE)[0]
+    domain = urlparse(url).netloc
 
     if domain not in config:
         results = [

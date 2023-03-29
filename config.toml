@@ -1,22 +1,18 @@
 ["b23.tv"]
 action = "request"
-content_regex = 'href="([^?]*)'
+content_regex = 'href="(.*)"'
 
 ["m.tb.cn"]
 action = "request"  # 处理 URL 请求的内容
-url_regex = '([^?]*)'
-content_regex = "var url = '([^&]*)&"
+content_regex = "var url = '(.*)'"
 
 ["www.bilibili.com"]
 action = "direct"
-url_regex = '([^?]*)'
 
 ["chaoshi.detail.tmall.com"]
 action = "direct"
-url_regex = '([^?]*).*(&|\?)(id=\d+)'
-url_expand = '\1?\3'
+params = ["id"]
 
 ["item.taobao.com"]
 action = "direct"
-url_regex = '([^?]*).*(&|\?)(id=\d+)'
-url_expand = '\1?\3'
+params = ["id"]
