@@ -36,4 +36,8 @@ context_regex = "..."
 # Optional, default is "\1"
 context_expand = "..." 
 
+["domain3"]
+# redirect when it returns 301 redirect
+action = "redirect"
+
 ```

@@ -1,22 +1,23 @@
 ["b23.tv"]
 action = "request"
 content_regex = 'href="(.*)"'
+["www.bilibili.com"]
+action = "direct"
 
 ["m.tb.cn"]
 action = "request"  # 处理 URL 请求的内容
 content_regex = "var url = '(.*)'"
-
-["www.bilibili.com"]
-action = "direct"
-
 ["chaoshi.detail.tmall.com"]
 action = "direct"
 params = ["id"]
-
 ["detail.tmall.com"]
 action = "direct"
 params = ["id"]
-
 ["item.taobao.com"]
 action = "direct"
 params = ["id"]
+
+["a.co"]
+action = "redirect" # 获取301跳转目标
+["www.amazon.com"]
+action = "direct"

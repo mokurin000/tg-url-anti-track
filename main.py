@@ -47,16 +47,18 @@ def process_url(url, rule, domain):
 
             return url.replace("?&", "?")
         case "request":
-            r = requests.get(url, allow_redirects=False)
-
-            content_regex = rule.get("content_regex", "")
-            content_expand = rule.get("content_expand", '\\1')
-
-            url = re.search(content_regex, r.text).expand(content_expand)
-            domain = urlparse(url).netloc
-            return process_url(url, {"action": "direct"}, domain)
+            ctx = requests.get(url, allow_redirects=False).text
+        case "redirect":
+            ctx = requests.get(url, allow_redirects=False).headers["Location"]
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"
+
+    content_regex = rule.get("content_regex", "")
+    content_expand = rule.get("content_expand", '\\1')
+
+    url = re.search(content_regex, ctx).expand(content_expand)
+    domain = urlparse(url).netloc
+    return process_url(url, {"action": "direct"}, domain)
 
 
 def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
