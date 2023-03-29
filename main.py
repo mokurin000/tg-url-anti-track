@@ -15,12 +15,7 @@ def replace_query_params(query, rule):
     url_replace = rule.get("url_replace", "")
 
     if url_regex:
-        if url_replace:
-            return re.sub(url_regex, url_replace, query)
-
-        else:
-            return re.sub(url_regex, '', query)
-
+        return re.sub(url_regex, url_replace, query)
     else:
         return query
 
@@ -35,13 +30,12 @@ def process_url(url, rule):
         r = requests.get(url)
 
         content_regex = rule.get("content_regex", "")
-        content_replace = rule.get("content_replace", "")
+        
+        # use \1 by default
+        content_expand = rule.get("content_expand", "\\1")
 
         if content_regex:
-            if content_replace:
-                return re.sub(content_regex, content_replace, r.text)
-            else:
-                return re.sub(content_regex, '', r.text)
+            return re.search(content_regex, r.text).expand(content_expand)
         else:
             return r.text
 
@@ -54,9 +48,15 @@ def inlinequery(update, context):
 
         domain = re.findall('://([a-zA-Z0-9._-]+)', url, re.IGNORECASE)[0]
 
-        if domain in config:
-            rule = config[domain]
-            url = process_url(url, rule)
+        if domain not in config:
+            results = [
+                telegram.InlineQueryResultArticle(
+                    id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent("unsupported url.\nplease check at repohttps://github.com/poly000/tg-url-anti-track"))
+            ]
+            context.bot.answer_inline_query(update.inline_query.id, results)
+            return
+        rule = config[domain]
+        url = process_url(url, rule)
 
         results = [
             telegram.InlineQueryResultArticle(
