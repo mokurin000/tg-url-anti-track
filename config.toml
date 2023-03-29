@@ -13,6 +13,10 @@ action = "direct"
 action = "direct"
 params = ["id"]
 
+["detail.tmall.com"]
+action = "direct"
+params = ["id"]
+
 ["item.taobao.com"]
 action = "direct"
 params = ["id"]
