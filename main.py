@@ -44,7 +44,7 @@ def process_url(url, rule, domain):
 
 def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    query = update.inlinequery.query
+    query = update.inline_query.query
     url = re.search('https?(://[^ \n]*)', query, re.IGNORECASE)
 
     if not url:
@@ -53,7 +53,7 @@ def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 id='1', title="no url found", input_message_content=telegram.InputTextMessageContent(
                     "no URL found in your query!\n你是故意来找茬的吧？"))
         ]
-        context.bot.answer_inline_query(update.inlinequery.id, results)
+        context.bot.answer_inline_query(update.inline_query.id, results)
         return
 
     url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
@@ -64,9 +64,10 @@ def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             telegram.InlineQueryResultArticle(
                 id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent(
                     "unsupported url.\n"
-                    "please check [repo](https://github.com/poly000/tg-url-anti-track), create an issue/pr for support.", parse_mode="MarkdownV2"))
+                    "please check [repo](https://github.com/poly000/tg-url-anti-track),"
+                    " create an issue/pr for support.", parse_mode="MarkdownV2"))
         ]
-        context.bot.answer_inline_query(update.inlinequery.id, results)
+        context.bot.answer_inline_query(update.inline_query.id, results)
         return
 
     rule = config[domain]
@@ -77,7 +78,7 @@ def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             id='1', title="URL", input_message_content=telegram.InputTextMessageContent(url))
     ]
 
-    context.bot.answer_inline_query(update.inlinequery.id, results)
+    context.bot.answer_inline_query(update.inline_query.id, results)
 
 
 def main():
