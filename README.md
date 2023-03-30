@@ -18,7 +18,7 @@ python main.py
 
 - [ ] use urllib.parse.{urlparse, parse_qs} instead of `url_regex`
 
-## Config format
+## Ruleset format
 
 ```toml
 ["domain1"]
@@ -34,10 +34,14 @@ action = "request"
 # Required when action is 'request', default will noop
 context_regex = "..." 
 # Optional, default is "\1"
-context_expand = "..." 
+context_expand = "..."
+# Optional, specify a general params for all matched urls from this short url
+r_params = ["id"]
 
 ["domain3"]
 # redirect when it returns 301 redirect
 action = "redirect"
+# Optional, specify a general params for all matched urls from this short url
+r_params = ["id"]
 
 ```

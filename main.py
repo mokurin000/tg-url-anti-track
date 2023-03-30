@@ -9,13 +9,16 @@ import requests
 
 from urllib.parse import urlparse, parse_qs
 
+with open("rules.toml", "r") as f:
+    ruleset = toml.load(f)
+
 with open("config.toml", "r") as f:
     config = toml.load(f)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.message.chat_id, text="Hello! I'm a URL parser bot.\n"
-                                                                        "Just type a URL in inline query,"
+                                                                        "Just type a URL in inline query,\n"
                                                                         "and I will remove all the tracking "
                                                                         "parameters.")
 
@@ -27,6 +30,21 @@ def match_expand(text, regex, expand):
     return text
 
 
+def clean_param(url, reversed_params=[]):
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query)
+
+    scheme = parsed.scheme
+    netloc = parsed.netloc
+    path = parsed.path if parsed.path else "/"
+    url = f"{scheme}://{netloc}{path}?"
+
+    for param in reversed_params:
+        url += f"&{param}={params[param]}"
+
+    return url.replace("?&", "?")
+
+
 def process_url(url, rule, domain):
     action = rule.get("action", "")
 
@@ -35,19 +53,8 @@ def process_url(url, rule, domain):
 
     match action:
         case "direct":
-            parsed = urlparse(url)
             reversed_params = rule.get("params", [])
-            params = parse_qs(parsed.query)
-
-            scheme = parsed.scheme
-            netloc = parsed.netloc
-            path = parsed.path if parsed.path else "/"
-            url = f"{scheme}://{netloc}{path}?"
-
-            for param in reversed_params:
-                url += f"&{param}={params[param]}"
-
-            return url.replace("?&", "?")
+            return clean_param(url, reversed_params)
         case "request":
             ctx = requests.get(url, allow_redirects=False).text
         case "redirect":
@@ -60,6 +67,8 @@ def process_url(url, rule, domain):
 
     url = re.search(content_regex, ctx).expand(content_expand)
     domain = urlparse(url).netloc
+
+    r_params = rule.get("r_params", None)
     return process_url(url, {"action": "direct"}, domain)
 
 
@@ -80,7 +89,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
     domain = urlparse(url).netloc
 
-    if domain not in config:
+    if domain not in ruleset:
         results = [
             telegram.InlineQueryResultArticle(
                 id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent(
@@ -91,7 +100,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.answer_inline_query(update.inline_query.id, results)
         return
 
-    rule = config[domain]
+    rule = ruleset[domain]
     url = process_url(url, rule, domain)
 
     results = [
@@ -103,7 +112,8 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    app = Application.builder().token("YOUR_BOT_TOKEN").build()
+    api_token = config.get("bot_token", "YOUR_BOT_TOKEN")
+    app = Application.builder().token(api_token).build()
 
     app.add_handler(CommandHandler('start', start))
     app.add_handler(InlineQueryHandler(inline_query))
