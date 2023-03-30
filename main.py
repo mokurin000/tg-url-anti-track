@@ -40,7 +40,7 @@ def clean_param(url, reversed_params=[]):
     url = f"{scheme}://{netloc}{path}?"
 
     for param in reversed_params:
-        url += f"&{param}={params[param]}"
+        url += f"&{param}={params[param][0]}"
 
     return url.replace("?&", "?")
 
