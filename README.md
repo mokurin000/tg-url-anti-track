@@ -14,15 +14,14 @@ poetry install
 python main.py
 ```
 
-## Todo
-
-- [ ] use urllib.parse.{urlparse, parse_qs} instead of `url_regex`
-
 ## Ruleset format
 
 ```toml
 ["domain1"]
 # direct if need no request
+#
+# if a domain was not found in ruleset, it will use 'direct' action
+# without any param.
 action = "direct"
 # only 'id=xxx' will be reserved.
 # if `params` is not set, drop all parameters.

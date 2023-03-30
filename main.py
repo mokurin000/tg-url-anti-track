@@ -15,6 +15,8 @@ with open("rules.toml", "r") as f:
 with open("config.toml", "r") as f:
     config = toml.load(f)
 
+default_rule = {"action": "direct"}
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.message.chat_id, text="Hello! I'm a URL parser bot.\n"
@@ -46,9 +48,6 @@ def clean_param(url, reversed_params=[]):
 
 
 def process_url(url, rule, domain):
-    if not rule:
-        return ""
-
     action = rule.get("action", "")
 
     if not action:
@@ -76,7 +75,7 @@ def process_url(url, rule, domain):
     if r_params:
         return clean_param(url, r_params)
 
-    return process_url(url, ruleset.get(domain, None), domain)
+    return process_url(url, ruleset.get(domain, default_rule), domain)
 
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -96,24 +95,8 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
     domain = urlparse(url).netloc
 
-    unsupported = [
-        telegram.InlineQueryResultArticle(
-            id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent(
-                "unsupported url.\n"
-                "please check [repo](https://github.com/poly000/tg-url-anti-track),"
-                " create an issue/pr for support.", parse_mode="MarkdownV2"))
-    ]
-
-    if domain not in ruleset:
-        await context.bot.answer_inline_query(update.inline_query.id, unsupported)
-        return
-
-    rule = ruleset[domain]
+    rule = ruleset.get(domain, default_rule)
     url = process_url(url, rule, domain)
-
-    if not url:
-        await context.bot.answer_inline_query(update.inline_query.id, unsupported)
-        return
 
     no_url_found = [
         telegram.InlineQueryResultArticle(
