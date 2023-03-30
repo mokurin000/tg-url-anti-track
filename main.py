@@ -46,6 +46,9 @@ def clean_param(url, reversed_params=[]):
 
 
 def process_url(url, rule, domain):
+    if not rule:
+        return ""
+
     action = rule.get("action", "")
 
     if not action:
@@ -69,7 +72,11 @@ def process_url(url, rule, domain):
     domain = urlparse(url).netloc
 
     r_params = rule.get("r_params", None)
-    return process_url(url, {"action": "direct"}, domain)
+
+    if r_params:
+        return clean_param(url, r_params)
+
+    return process_url(url, ruleset.get(domain, None), domain)
 
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -77,38 +84,43 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = re.search('https?(://[^ \n，。]*)', query, re.IGNORECASE)
 
     if not url:
-        results = [
+        no_url_found = [
             telegram.InlineQueryResultArticle(
                 id='1', title="no url found", input_message_content=telegram.InputTextMessageContent(
                     "no URL found in your query!\n"
                     "你是故意来找茬的吧？"))
         ]
-        await context.bot.answer_inline_query(update.inline_query.id, results)
+        await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
         return
 
     url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
     domain = urlparse(url).netloc
 
+    unsupported = [
+        telegram.InlineQueryResultArticle(
+            id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent(
+                "unsupported url.\n"
+                "please check [repo](https://github.com/poly000/tg-url-anti-track),"
+                " create an issue/pr for support.", parse_mode="MarkdownV2"))
+    ]
+
     if domain not in ruleset:
-        results = [
-            telegram.InlineQueryResultArticle(
-                id='1', title="unsupported url", input_message_content=telegram.InputTextMessageContent(
-                    "unsupported url.\n"
-                    "please check [repo](https://github.com/poly000/tg-url-anti-track),"
-                    " create an issue/pr for support.", parse_mode="MarkdownV2"))
-        ]
-        await context.bot.answer_inline_query(update.inline_query.id, results)
+        await context.bot.answer_inline_query(update.inline_query.id, unsupported)
         return
 
     rule = ruleset[domain]
     url = process_url(url, rule, domain)
 
-    results = [
+    if not url:
+        await context.bot.answer_inline_query(update.inline_query.id, unsupported)
+        return
+
+    no_url_found = [
         telegram.InlineQueryResultArticle(
             id='1', title="URL", input_message_content=telegram.InputTextMessageContent(url))
     ]
 
-    await context.bot.answer_inline_query(update.inline_query.id, results)
+    await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
 
 
 def main():
