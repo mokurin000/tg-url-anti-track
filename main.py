@@ -36,15 +36,18 @@ def clean_param(url, reversed_params=[]):
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
 
-    scheme = parsed.scheme
-    netloc = parsed.netloc
+    scheme, netloc = parsed.scheme, parsed.netloc
+
     path = parsed.path if parsed.path else "/"
     url = f"{scheme}://{netloc}{path}?"
 
     for param in reversed_params:
-        url += f"&{param}={params[param][0]}"
+        if param in params:
+            url += f"&{param}={params[param][0]}"
 
-    return url.replace("?&", "?")
+    url = url.replace("?&", "?")  # if no param was matched
+
+    return url.removesuffix("?")
 
 
 def process_url(url, rule, domain):
