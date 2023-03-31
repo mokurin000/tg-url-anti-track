@@ -18,7 +18,7 @@ python main.py
 
 ```toml
 ["domain1"]
-# direct if need no request
+# direct if need no request. default action.
 #
 # if a domain was not found in ruleset, it will use 'direct' action
 # without any param.

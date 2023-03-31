@@ -8,16 +8,12 @@ content_regex = "var url = '(.*)'"
 r_params = ["id"]
 
 ["chaoshi.detail.tmall.com"]
-action = "direct"
 params = ["id"]
 ["detail.tmall.com"]
-action = "direct"
 params = ["id"]
 ["item.taobao.com"]
-action = "direct"
 params = ["id"]
 ["h5.m.goofish.com"]
-action = "direct"
 params = ["id"]
 
 ["a.co"]
@@ -26,3 +22,6 @@ action = "redirect" # 获取301跳转目标
 ["xhslink.com"]
 action = "request"
 content_regex = 'href="(.*)"'
+
+["www.coolapk.com"]
+params = ["shareKey"]

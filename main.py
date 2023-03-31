@@ -32,7 +32,8 @@ def match_expand(text, regex, expand):
     return text
 
 
-def clean_param(url, reversed_params=[]):
+def clean_param(url, reversed_params):
+
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
 
@@ -51,10 +52,7 @@ def clean_param(url, reversed_params=[]):
 
 
 def process_url(url, rule, domain):
-    action = rule.get("action", "")
-
-    if not action:
-        raise "{domain}: action must not be empty!"
+    action = rule.get("action", "direct")
 
     match action:
         case "direct":
