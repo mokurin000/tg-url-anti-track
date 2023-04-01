@@ -33,7 +33,6 @@ def match_expand(text, regex, expand):
 
 
 def clean_param(url, reversed_params):
-
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
 
@@ -81,7 +80,7 @@ def process_url(url, rule, domain):
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.inline_query.query
-    url = re.search('https?(://[^ \n，。]*)', query, re.IGNORECASE)
+    url = re.search('http(s?)(://[^ \n，。]*)', query, re.IGNORECASE)
 
     if not url:
         no_url_found = [
@@ -93,7 +92,8 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
         return
 
-    url = url.expand("https\\1")  # ensure "http://b23.tv" will be converted to "https://..."
+    origin_url = url.expand("http\\1\\2")
+    url = url.expand("https\\2")  # ensure "http://b23.tv" will be converted to "https://..."
     domain = urlparse(url).netloc
 
     rule = ruleset.get(domain, default_rule)
@@ -101,7 +101,12 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     no_url_found = [
         telegram.InlineQueryResultArticle(
-            id='1', title="URL", input_message_content=telegram.InputTextMessageContent(url))
+            id='1', title="cleaned URL",
+            input_message_content=telegram.InputTextMessageContent(url)),
+        telegram.InlineQueryResultArticle(
+            id='2', title="cleaned message",
+            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url))
+        )
     ]
 
     await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
