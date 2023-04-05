@@ -28,3 +28,11 @@ params = ["shareKey"]
 
 ["qr.ae"]
 action = "redirect"
+
+["t.co"]
+action = "redirect"
+
+["y.music.163.com"]
+params = ["id"]
+["music.163.com"]
+params = ["id"]
