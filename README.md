@@ -30,11 +30,11 @@ params = ["id"]
 ["domain2"]
 # request for those like 'm.tb.cn'
 action = "request"
-# Required when action is 'request', default will noop
+# Required, default will be no-op
 context_regex = "..." 
 # Optional, default is "\1"
 context_expand = "..."
-# Optional, specify a general params for all matched urls from this short url
+# Optional, specify general params for all redirected urls from this short url
 r_params = ["id"]
 
 ["domain3"]
@@ -42,5 +42,12 @@ r_params = ["id"]
 action = "redirect"
 # Optional, specify a general params for all matched urls from this short url
 r_params = ["id"]
+
+["domain4"]
+action = "regex"
+# Required, default will be no-op
+url_regex = "..."
+# Optional, default is "\1"
+url_expand = "..."
 
 ```

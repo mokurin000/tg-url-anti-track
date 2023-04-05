@@ -61,6 +61,11 @@ def process_url(url, rule, domain):
             ctx = requests.get(url, allow_redirects=False).text
         case "redirect":
             ctx = requests.get(url, allow_redirects=False).headers["Location"]
+        case "regex":
+            url_regex = rule.get("url_regex", "")
+            url_expand = rule.get("url_expand", "\\1")
+
+            return re.search(url_regex, url).expand(url_expand)
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"
 
@@ -99,7 +104,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rule = ruleset.get(domain, default_rule)
     url = process_url(url, rule, domain)
 
-    no_url_found = [
+    processed_url = [
         telegram.InlineQueryResultArticle(
             id='1', title="cleaned URL",
             input_message_content=telegram.InputTextMessageContent(url)),
@@ -109,7 +114,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     ]
 
-    await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
+    await context.bot.answer_inline_query(update.inline_query.id, processed_url)
 
 
 def main():
