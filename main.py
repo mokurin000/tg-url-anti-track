@@ -110,7 +110,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             input_message_content=telegram.InputTextMessageContent(url)),
         telegram.InlineQueryResultArticle(
             id='2', title="cleaned message",
-            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url))
+            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url+" "))
         )
     ]
 
