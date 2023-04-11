@@ -1,6 +1,5 @@
 ["b23.tv"]
-action = "request"
-content_regex = 'href="(.*)"'
+action = "redirect"
 
 ["m.tb.cn"]
 action = "request"  # 处理 URL 请求的内容
@@ -20,8 +19,7 @@ params = ["id"]
 action = "redirect" # 获取301跳转目标
 
 ["xhslink.com"]
-action = "request"
-content_regex = 'href="(.*)"'
+action = "redirect"
 
 ["www.coolapk.com"]
 params = ["shareKey"]
