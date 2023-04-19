@@ -59,8 +59,12 @@ def process_url(url, rule, domain):
             return clean_param(url, reversed_params)
         case "request":
             ctx = requests.get(url, allow_redirects=False).text
+            content_regex = rule.get("content_regex", "")
+            content_expand = rule.get("content_expand", '\\1')
+
+            url = re.search(content_regex, ctx).expand(content_expand)
         case "redirect":
-            ctx = requests.get(url, allow_redirects=False).headers["Location"]
+            url = requests.get(url, allow_redirects=False).headers["Location"]
         case "regex":
             url_regex = rule.get("url_regex", "")
             url_expand = rule.get("url_expand", "\\1")
@@ -69,10 +73,7 @@ def process_url(url, rule, domain):
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"
 
-    content_regex = rule.get("content_regex", "")
-    content_expand = rule.get("content_expand", '\\1')
 
-    url = re.search(content_regex, ctx).expand(content_expand)
     domain = urlparse(url).netloc
 
     r_params = rule.get("r_params", None)
@@ -110,7 +111,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             input_message_content=telegram.InputTextMessageContent(url)),
         telegram.InlineQueryResultArticle(
             id='2', title="cleaned message",
-            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url))
+            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url+" "))
         )
     ]
 

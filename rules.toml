@@ -22,8 +22,7 @@ params = ["id"]
 action = "redirect" # 获取301跳转目标
 
 ["xhslink.com"]
-action = "request"
-content_regex = 'href="(.*)"'
+action = "redirect"
 
 ["www.coolapk.com"]
 params = ["shareKey"]
