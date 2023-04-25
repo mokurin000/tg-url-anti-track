@@ -50,6 +50,25 @@ def clean_param(url, reversed_params):
     return url.removesuffix("?")
 
 
+def process_request(url, rule):
+    ctx = requests.get(url, allow_redirects=False).text
+    content_regex = rule.get("content_regex", "")
+    content_expand = rule.get("content_expand", '\\1')
+
+    return re.search(content_regex, ctx).expand(content_expand)
+
+
+def process_regex(url, rule):
+    url_regex = rule.get("url_regex", "")
+    url_expand = rule.get("url_expand", "\\1")
+
+    return re.search(url_regex, url).expand(url_expand)
+
+
+def process_redirect(url, rule):
+    return requests.get(url, allow_redirects=False).headers["Location"]
+
+
 def process_url(url, rule, domain):
     action = rule.get("action", "direct")
 
@@ -58,21 +77,15 @@ def process_url(url, rule, domain):
             reversed_params = rule.get("params", [])
             return clean_param(url, reversed_params)
         case "request":
-            ctx = requests.get(url, allow_redirects=False).text
-            content_regex = rule.get("content_regex", "")
-            content_expand = rule.get("content_expand", '\\1')
-
-            url = re.search(content_regex, ctx).expand(content_expand)
+            url = process_request(url, rule)
         case "redirect":
-            url = requests.get(url, allow_redirects=False).headers["Location"]
+            url = process_redirect(url, rule)
         case "regex":
-            url_regex = rule.get("url_regex", "")
-            url_expand = rule.get("url_expand", "\\1")
-
-            return re.search(url_regex, url).expand(url_expand)
+            return process_regex(url, rule)
+        case "request_redirect":
+            url = process_redirect(process_request(url, rule), rule)
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"
-
 
     domain = urlparse(url).netloc
 
@@ -111,7 +124,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             input_message_content=telegram.InputTextMessageContent(url)),
         telegram.InlineQueryResultArticle(
             id='2', title="cleaned message",
-            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url+" "))
+            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url + " "))
         )
     ]
 
