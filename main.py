@@ -50,8 +50,8 @@ def clean_param(url, reversed_params):
     return url.removesuffix("?")
 
 
-def process_request(url, rule):
-    ctx = requests.get(url, allow_redirects=False).text
+def process_request(url, rule, redirect=False):
+    ctx = requests.get(url, allow_redirects=redirect).text
     content_regex = rule.get("content_regex", "")
     content_expand = rule.get("content_expand", '\\1')
 
@@ -83,7 +83,7 @@ def process_url(url, rule, domain):
         case "regex":
             return process_regex(url, rule)
         case "request_redirect":
-            url = process_redirect(process_request(url, rule), rule)
+            url = process_request(url, rule, True)
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"
 
