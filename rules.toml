@@ -47,7 +47,7 @@ content_regex = "var hrl='([^']*)'"
 
 ["mdisk.pro"]
 action = "request"
-content_regex = "document.location = \('([^#]*)#"
+content_regex = "document.location = \\('([^#]*)#"
 
 ["tnlink.in"]
 action = "request_redirect"
