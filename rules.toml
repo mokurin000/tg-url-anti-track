@@ -57,4 +57,4 @@ action = "request_redirect"
 content_regex = 'window.location.href = "([^"]*)"'
 
 ["www.google.com"]
-params = ["url"]
+params = ["url", "q"]
