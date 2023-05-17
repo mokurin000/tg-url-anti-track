@@ -65,7 +65,7 @@ def process_regex(url, rule):
     return re.search(url_regex, url).expand(url_expand)
 
 
-def process_redirect(url, rule):
+def process_redirect(url):
     return requests.get(url, allow_redirects=False).headers["Location"]
 
 
@@ -79,10 +79,12 @@ def process_url(url, rule, domain):
         case "request":
             url = process_request(url, rule)
         case "redirect":
-            url = process_redirect(url, rule)
+            url = process_redirect(url)
         case "regex":
             return process_regex(url, rule)
         case "request_redirect":
+            return process_redirect(process_request(url, rule))
+        case "redirected_request":
             url = process_request(url, rule, True)
         case _:
             raise f"unexpected action '{action}' in domain '{domain}'"

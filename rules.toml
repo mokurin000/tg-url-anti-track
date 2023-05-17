@@ -50,10 +50,10 @@ action = "request"
 content_regex = "document.location = \\('([^#]*)#"
 
 ["tnlink.in"]
-action = "request_redirect"
+action = "redirected_request"
 content_regex = 'window.location.href = "([^"]*)"'
 ["tnshort.in"]
-action = "request_redirect"
+action = "redirected_request"
 content_regex = 'window.location.href = "([^"]*)"'
 
 ["www.google.com"]
