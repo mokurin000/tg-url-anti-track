@@ -83,7 +83,7 @@ def process_url(url, rule, domain):
         case "regex":
             return process_regex(url, rule)
         case "request_redirect":
-            return process_redirect(process_request(url, rule))
+            url = process_redirect(process_request(url, rule))
         case "redirected_request":
             url = process_request(url, rule, True)
         case _:
