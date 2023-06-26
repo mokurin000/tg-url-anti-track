@@ -17,6 +17,8 @@ params = ["id"]
 params = ["id"]
 ["h5.m.goofish.com"]
 params = ["id"]
+["h5.m.taobao.com"]
+params = ["id"]
 
 ["a.co"]
 action = "redirect" # 获取301跳转目标
