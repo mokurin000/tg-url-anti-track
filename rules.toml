@@ -5,6 +5,10 @@ content_regex = 'href="(.*)"'
 action = "direct_script"
 params = ["t", "p"]
 script = "bilibili"
+["bilibili.com"]
+action = "direct_script"
+params = ["t", "p"]
+script = "bilibili"
 
 ["m.tb.cn"]
 action = "request"  # 处理 URL 请求的内容
