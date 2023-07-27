@@ -1,3 +1,4 @@
+from importlib import import_module
 import telegram
 from telegram.ext import InlineQueryHandler, CommandHandler, Application, ContextTypes
 from telegram import Update
@@ -19,10 +20,11 @@ default_rule = {"action": "direct"}
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.message.chat_id, text="Hello! I'm a URL parser bot.\n"
-                                                                        "Just type a URL in inline query,\n"
-                                                                        "and I will remove all the tracking "
-                                                                        "parameters.")
+    text = """Hello! I'm a URL parser bot.
+Just type a URL in inline query,
+and I will remove all the tracking 
+parameters."""
+    await context.bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
 def match_expand(text, regex, expand):
@@ -53,7 +55,7 @@ def clean_param(url, reversed_params):
 def process_request(url, rule, redirect=False):
     ctx = requests.get(url, allow_redirects=redirect).text
     content_regex = rule.get("content_regex", "")
-    content_expand = rule.get("content_expand", '\\1')
+    content_expand = rule.get("content_expand", "\\1")
 
     return re.search(content_regex, ctx).expand(content_expand)
 
@@ -76,6 +78,11 @@ def process_url(url, rule, domain):
         case "direct":
             reversed_params = rule.get("params", [])
             return clean_param(url, reversed_params)
+        case "direct_script":
+            reversed_params = rule.get("params", [])
+            url = clean_param(url, reversed_params)
+            script = rule.get("script")
+            return import_module("scripts." + script).process(url)
         case "request":
             url = process_request(url, rule)
         case "redirect":
@@ -101,46 +108,69 @@ def process_url(url, rule, domain):
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.inline_query.query
-    url = re.search('http(s?)(://[^ \n，。]*)', query, re.IGNORECASE)
+    url = re.search("http(s?)(://[^ \n，。]*)", query, re.IGNORECASE)
 
     if not url:
         no_url_found = [
             telegram.InlineQueryResultArticle(
-                id='1', title="no url found", input_message_content=telegram.InputTextMessageContent(
-                    "no URL found in your query!\n"
-                    "你是故意来找茬的吧？"))
+                id="1",
+                title="no url found",
+                input_message_content=telegram.InputTextMessageContent(
+                    "no URL found in your query!\n" "你是故意来找茬的吧？"
+                ),
+            )
         ]
         await context.bot.answer_inline_query(update.inline_query.id, no_url_found)
         return
 
     origin_url = url.expand("http\\1\\2")
-    url = url.expand("https\\2")  # ensure "http://b23.tv" will be converted to "https://..."
+    url = url.expand(
+        "https\\2"
+    )  # ensure "http://b23.tv" will be converted to "https://..."
     domain = urlparse(url).netloc
 
     rule = ruleset.get(domain, default_rule)
-    url = process_url(url, rule, domain)
+    try:
+        url = process_url(url, rule, domain)
+    except Exception as e:
+        errors = [
+            telegram.InlineQueryResultArticle(
+                id="1",
+                title="呜呜呜… 出错了",
+                input_message_content=telegram.InputTextMessageContent(
+                    f"{e.__class__.__name__}: {e}"
+                ),
+            ),
+        ]
+        await context.bot.answer_inline_query(update.inline_query.id, errors)
+        raise e
+    else:
+        processed_url = [
+            telegram.InlineQueryResultArticle(
+                id="1",
+                title="cleaned URL",
+                input_message_content=telegram.InputTextMessageContent(url),
+            ),
+            telegram.InlineQueryResultArticle(
+                id="2",
+                title="cleaned message",
+                input_message_content=telegram.InputTextMessageContent(
+                    query.replace(origin_url, url + " ")
+                ),
+            ),
+        ]
 
-    processed_url = [
-        telegram.InlineQueryResultArticle(
-            id='1', title="cleaned URL",
-            input_message_content=telegram.InputTextMessageContent(url)),
-        telegram.InlineQueryResultArticle(
-            id='2', title="cleaned message",
-            input_message_content=telegram.InputTextMessageContent(query.replace(origin_url, url + " "))
-        )
-    ]
-
-    await context.bot.answer_inline_query(update.inline_query.id, processed_url)
+        await context.bot.answer_inline_query(update.inline_query.id, processed_url)
 
 
 def main():
     api_token = config.get("bot_token", "YOUR_BOT_TOKEN")
     app = Application.builder().token(api_token).build()
 
-    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(InlineQueryHandler(inline_query))
     app.run_polling()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
