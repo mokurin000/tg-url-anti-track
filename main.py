@@ -10,10 +10,10 @@ import requests
 
 from urllib.parse import urlparse, parse_qs
 
-with open("rules.toml", "r") as f:
+with open("rules.toml", "r", encoding="utf8") as f:
     ruleset = toml.load(f)
 
-with open("config.toml", "r") as f:
+with open("config.toml", "r", encoding="utf8") as f:
     config = toml.load(f)
 
 default_rule = {"action": "direct"}
@@ -22,7 +22,7 @@ default_rule = {"action": "direct"}
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = """Hello! I'm a URL parser bot.
 Just type a URL in inline query,
-and I will remove all the tracking 
+and I will remove all the tracking
 parameters."""
     await context.bot.send_message(chat_id=update.message.chat_id, text=text)
 
