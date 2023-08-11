@@ -108,7 +108,7 @@ def process_url(url, rule, domain):
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.inline_query.query
-    url = re.search("http(s?)(://[^ \n，。]*)", query, re.IGNORECASE)
+    url = re.search("http(s?)(://[^\s\n，。]*)", query, re.IGNORECASE)
 
     if not url:
         no_url_found = [
