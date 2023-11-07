@@ -69,3 +69,6 @@ content_regex = 'window.location.href = "([^"]*)"'
 
 ["www.google.com"]
 params = ["url", "q"]
+
+["m.acfun.cn"]
+params = ["ac"]
