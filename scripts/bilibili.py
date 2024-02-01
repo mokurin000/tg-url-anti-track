@@ -11,7 +11,10 @@ def process(url: str) -> str:
         return url
 
     bvid = parsed.path.split("/")[2]
-    avid = bv2av(bvid)
-
-    return url.replace(bvid, avid)
-
+    try:
+        avid = bv2av(bvid)
+        url = url.replace(bvid, avid)
+    except:
+        pass
+    finally:
+        return url
