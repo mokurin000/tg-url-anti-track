@@ -82,7 +82,7 @@ def process_url(url, rule, domain):
             reversed_params = rule.get("params", [])
             url = clean_param(url, reversed_params)
             script = rule.get("script")
-            return import_module("scripts." + script).process(url)
+            return import_module("tg_url_anti_track.scripts." + script).process(url)
         case "request":
             url = process_request(url, rule)
         case "redirect":
