@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-from avbv import bv2av
+from abv_py import bv2av
 
 def process(url: str) -> str:
     parsed = urlparse(url)
@@ -12,7 +12,7 @@ def process(url: str) -> str:
 
     bvid = parsed.path.split("/")[2]
     try:
-        avid = bv2av(bvid)
+        avid = f"av{bv2av(bvid)}"
         url = url.replace(bvid, avid)
     except:
         pass
