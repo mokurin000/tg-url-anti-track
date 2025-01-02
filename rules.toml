@@ -1,3 +1,6 @@
+["bili2233.cn"]
+action = "request"
+content_regex = 'href="(.*)"'
 ["b23.tv"]
 action = "request"
 content_regex = 'href="(.*)"'
